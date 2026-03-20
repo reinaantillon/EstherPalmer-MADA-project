@@ -11,6 +11,10 @@ data_location <- here::here("data","processed-data","processeddata.rds")
 #load data
 mydata <- readRDS(data_location)
 
+## ---- Calculate Complexity -------
+complexity <- 
+
+
 ## ---- table1 --------
 summary_df = skimr::skim(mydata)
 print(summary_df)

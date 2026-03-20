@@ -56,91 +56,99 @@ skimr::skim(enviro_rawdata)
 
 
 ## ---- cleandata1 --------
-# Inspecting the data, we find some problems that need addressing:
-# First, there is an entry for height which says "sixty" instead of a number. 
-# Does that mean it should be a numeric 60? It somehow doesn't make
-# sense since the weight is 60kg, which can't happen for a 60cm person (a baby)
-# Since we don't know how to fix this, we might decide to remove the person.
-# This "sixty" entry also turned all Height entries into characters instead of numeric.
-# That conversion to character also means that our summary function isn't very meaningful.
-# So let's fix that first.
-d1 <- rawdata %>% dplyr::filter( Height != "sixty" ) %>% 
-                  dplyr::mutate(Height = as.numeric(Height))
-# look at partially fixed data again
-skimr::skim(d1)
-hist(d1$Height)
-
+d1 <- dplyr::select(enviro_rawdata, -DO)
+#removes dissolved oxygen from the data set since I belive the instrument stopped working
+#the - means remove
 
 ## ---- cleandata2 --------
-# Now we see that there is one person with a height of 6. 
-# that could be a typo, or someone mistakenly entered their height in feet.
-# If we don't know, we might need to remove this person.
-# But let's assume that we somehow know that this is meant to be 6 feet, so we can convert to centimeters.
-d2 <- d1 %>% dplyr::mutate( Height = replace(Height, Height=="6",round(6*30.48,0)) )
-#height values seem ok now
-skimr::skim(d2)
-
+d1 <- d1 %>% dplyr::rename(
+  flow1 = FLOW...10,
+  flow2 = FLOW...11,
+  flow3 = FLOW...12
+)
+#renames these columns bc idk what this is
+flow <- subset(d1, select = c(flow1, flow2, flow3))
+#creates a dataframe with just the 3 flow variables
+#this is a much nicer method than my first attempts bc it keeps the variable names!
+d1$flow_avg <- rowMeans(flow)
+#this creates a variable in d1 that is the average of all the flow measurements (we took 3)
+d2 <- select(d1, -flow1, -flow2, -flow3)
+#now that we have the average we don't need the individual flow measurements
 
 ## ---- cleandata3 --------
-# now let's look at weight
-# there is a person with weight of 7000, which is impossible,
-# and one person with missing weight.
-# Note that the original data had an empty cell. 
-# The codebook says that's not allowed, it should have been NA.
-# R automatically converts empty values to NA.
-# If you don't want that, you can adjust it when you load the data.
-# to be able to analyze the data, we'll remove those individuals as well.
-# Note: Some analysis methods can deal with missing values, so it's not always necessary to remove them. 
-# This should be adjusted based on your planned analysis approach. 
-d3 <- d2 %>%  dplyr::filter(Weight != 7000) %>% tidyr::drop_na()
-skimr::skim(d3)
+d2$Day <- as.character(d2$Day)
+#Makes this a character rather than a continuous varible
+d2$COND <- na_if(d2$COND, c("pH METER BROKE"))
+#turns the string into an NA
+#in case it was not obvious, our pH meter broke so we had some NA's
+d2$COND <- as.numeric(d2$COND)
+#This makes conductivity a numeric variable
 
+#renaming everything to make it easier
+d3 <- d2 %>% rename(
+  depth = `DEPTH (cm)`,
+  max.temp = `Max Temp`,
+  min.temp = `Min Temp`,
+  rel.humid = `R.H (%)`,
+  temp = `TEMP ©`,
+  salt = SALT,
+  wind.speed = `Wind Speed (mph)`,
+  turbidity = TURBIDITY,
+  width = WIDTH,
+  twoinST = `2 Inch Soil Temp`,
+  fourinST = `4 Inch Soil Temp`,
+  eightinST = `8 Inch Soil Temp`,
+  radiation = `Total Radiation (MJ/m2)`,
+  rain = `Rain (in)`,
+  ET = `ET (in)`
+)
+d3$Weekday <- as.factor(d3$Weekday)
+#this makes it so that it's a factor not a character
+
+skim(d3)
 
 ## ---- cleandata4 --------
-# We also want to have Gender coded as a categorical/factor variable
-# we can do that with simple base R code to mix things up
-d3$Gender <- as.factor(d3$Gender)  
-skimr::skim(d3)
+#there is one in depth that is 3in so I need to convert that to cm then make everything numbers
+x <- 3*2.54
+#math to covert 3in to cm
+d3[17, 9] = "7.62"
+#can't replace with the number since its still regarded as a character string so replaced with string
+d3$depth <- as.numeric(d3$depth)
 
+d3$wind.speed <- na_if(d3$wind.speed, c("NA"))
+d3$wind.speed <- as.numeric(d3$wind.speed)
+d3$turbidity <- na_if(d3$turbidity, c("NA"))
+d3$turbidity <- as.numeric(d3$turbidity)
+#looks like not all NA were marked as NA some were as characters
+#made these numeric bc they are
+
+skim(d3)
 
 ## ---- cleandata5 --------
-#now we see that there is another NA, but it's not "NA" from R 
-#instead it was loaded as character and is now considered as a category.
-#There is also an individual coded as "N" which is not allowed.
-#This could be mistyped M or a mistyped NA. If we have a good guess, we could adjust.
-#If we don't we might need to remove that individual.
-# we'll proceed here by removing both the NA and N individuals
-#since this keeps an empty category, I'm also using droplevels() to get rid of it
-d4 <- d3 %>% dplyr::filter( !(Gender %in% c("NA","N")) ) %>% droplevels()
-skimr::skim(d4)
+#now the only thing left is to convert width from ft in format into a number of cm
+w1 <- subset(d3, select = c(width))
+w2 <- w1 %>% separate(width, c('feet', 'inches'), "'", convert = TRUE)
+#this separates feet and inches into separate columns
+w2$inches <- gsub('"', '', w2$inches)
+#this removes the " on inches
+w2$inches <- as.numeric(w2$inches)
+w2$inches[is.na(w2$inches)] <- 0
+#makes inches numeric, replaces NA with 0
+w2[78, 2] = NA
+#adds back in the one actual NA in this dataset
 
+w3 <- w2%>% mutate(cm = (12*feet + inches)*2.54)
+#creates a df with a column for cm
+
+d3$width <- w3$cm
+#replaces the column in the whole dataframe with the one in cm from w3
+
+skim(d3)
 
 ## ---- savedata --------
-# all done, data is clean now. 
-# Let's assign at the end to some final variable
-# makes it easier to add steps above
-processeddata <- d4
+processeddata <- d3
 # location to save file
-save_data_location <- here::here("data","processed-data","processeddata.rds")
+save_data_location <- here::here("data","processed-data","processed_enviro_data.rds")
 saveRDS(processeddata, file = save_data_location)
 
-
-
 ## ---- notes --------
-# anything you don't want loaded into the Quarto file but 
-# keep in the R file, just give it its own label and then don't include that label
-# in the Quarto file
-
-# Dealing with NA or "bad" data:
-# removing anyone who had "faulty" or missing data is one approach.
-# it's often not the best. based on your question and your analysis approach,
-# you might want to do cleaning differently (e.g. keep individuals with some missing information)
-
-# Saving data as RDS:
-# I suggest you save your processed and cleaned data as RDS or RDA/Rdata files. 
-# This preserves coding like factors, characters, numeric, etc. 
-# If you save as CSV, that information would get lost.
-# However, CSV is better for sharing with others since it's plain text. 
-# If you do CSV, you might want to write down somewhere what each variable is.
-# See here for some suggestions on how to store your processed data:
-# http://www.sthda.com/english/wiki/saving-data-into-r-data-format-rds-and-rdata
