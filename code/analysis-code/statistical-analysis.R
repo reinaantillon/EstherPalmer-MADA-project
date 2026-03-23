@@ -89,8 +89,9 @@ tidy(lm_fit)
 #This is interesting but far from perfect
 #Should maybe run a random forest whatever to select variables for use
 #This also doesn't show a good relationship between temp and complexity despite my dotplots showing one
+lm_pred <- predict(lm_fit, mydata) %>% bind_cols(mydata %>% select(complexity))
 
-
+lm_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
 
 #ok so for now I will need to split into test and training data
 #I do actually have a second dataset that I can use from this same site with all the same variables just sampling weekly instead of daily
@@ -133,8 +134,7 @@ rf_fit <- rf_mod %>% fit(complexity~., data = train)
 rf_fit
 
 rf_train_pred <- predict(rf_fit, train) %>% 
-  bind_cols(predict(rf_fit, train)) %>% 
   bind_cols(train %>% select(complexity))
 #unlike my last random forest this is predicting less NA's which is good
 
-rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred...1)
+rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
