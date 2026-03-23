@@ -11,6 +11,7 @@ library(here) #for data loading/saving
 library(tidymodels) #for modeling
 library(randomForest) #for randomforest modeling
 library(caret) #modeling
+library(ranger) #random forest modeling but different
 
 #path to data
 #note the use of the here() package and not absolute paths
@@ -89,6 +90,8 @@ tidy(lm_fit)
 #Should maybe run a random forest whatever to select variables for use
 #This also doesn't show a good relationship between temp and complexity despite my dotplots showing one
 
+
+
 #ok so for now I will need to split into test and training data
 #I do actually have a second dataset that I can use from this same site with all the same variables just sampling weekly instead of daily
 #and I plan to use that second data set to train my model
@@ -104,6 +107,7 @@ tidy(lm_fit)
 df3 <- mydata %>% select(-ET, -COND, -Day, -Date, - Weekday, -max.temp, -min.temp, -twoinST, -fourinST, -eightinST)
 df3 <- df3 %>% select(-Anat, -AquaInve, -BrazI, -Brae, -Infa, -MontII, -MuenI, -Mues, -Rubi, -Typm, -Gamn, -GiveI, 
   -NewpII, -MissII, -MontI, -Hart, -Agbe, -Hada, -Mine, -Oran, -Saitll, -KisrI, -MbanI, -Luci, -BertBuda, -MuenII)
+#note to self: rename saintpaul later so there's II instead of ll
 
 df3$complexity <- as.integer(df3$complexity)
 set.seed(222)
@@ -112,12 +116,25 @@ train <- df3[ind==1,]
 test <- df3[ind==2,]
 #So from what I can tell, I assigned 80% of the data to train, and 20% to test
 
-rf <- randomForest(complexity~., data=train, na.action = na.roughfix)
-print(rf)
+#rf <- randomForest(complexity~., data=train, na.action = na.roughfix)
+#print(rf)
 #na.roughfix estimates missing values, which I'm hoping will lead to less nas in the prediction
 
-pred1 <- predict(rf, train)
+#pred1 <- predict(rf, train)
 #there's a lot of NA's
 #it did not like that complexity and pred1 are not factors
 #It further does not like that they don't match
-confusionMatrix(as.factor(pred1), as.factor(train$complexity))
+#confusionMatrix(as.factor(pred1), as.factor(train$complexity))
+
+#ok I found a different package lets try this maybe it will hate me less
+
+rf_mod <- rand_forest(trees = 1000) %>% set_engine("ranger") %>% set_mode("regression")
+rf_fit <- rf_mod %>% fit(complexity~., data = train)
+rf_fit
+
+rf_train_pred <- predict(rf_fit, train) %>% 
+  bind_cols(predict(rf_fit, train)) %>% 
+  bind_cols(train %>% select(complexity))
+#unlike my last random forest this is predicting less NA's which is good
+
+rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred...1)
