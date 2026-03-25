@@ -96,7 +96,7 @@ cor_plot3
 
 df4 <- mydata %>% select(-ET, -COND, -Day, -Date, - Weekday, -max.temp, -min.temp, -twoinST, -fourinST, -eightinST)
 df4 <- df4 %>% select(-Anat, -AquaInve, -BrazI, -Brae, -Infa, -MontII, -MuenI, -Mues, -Rubi, -Typm, -Gamn, -GiveI, 
-  -NewpII, -MissII, -MontI, -Hart, -Agbe, -Hada, -Mine, -Oran, -Saitll, -KisrI, -MbanI, -Luci, -BertBuda, -MuenII)
+  -NewpII, -MissII, -MontI, -Hart, -Agbe, -Hada, -Mine, -Oran, -SaitII, -KisrI, -MbanI, -Luci, -BertBuda, -MuenII)
 #note to self: rename saintpaul later so there's II instead of ll
 
 df4$complexity <- as.integer(df4$complexity)
@@ -170,3 +170,8 @@ rf_test_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
 #I think that while this random forest model is maybe a better fit than my linear model,
 #since I can't seem to learn the final formula, it may be better to stick with my linear model
 #since I do need to know what my predictors are
+
+############################
+#### Serovar correlation
+
+#I would like to know if the presense of any serovar correlates with each other

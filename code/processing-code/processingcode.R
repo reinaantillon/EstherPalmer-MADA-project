@@ -170,15 +170,16 @@ skim(d5)
 
 ## ---- cleandata7 --------
 #It looks like everything is a character, which is incorrect
-d6 <- d5 %>% mutate_at(vars(Anat, AquaInve, BrazI, Brae, Infa, MontII, MuenI, Mues, Rubi, Typm, Gamn, GiveI, NewpII, MissII, MontI, Hart, Agbe, Hada, Mine, Oran, Saitll, Luci, BertBuda), as.numeric)
+d6 <- d5 %>% mutate_at(vars(Anat, AquaInve, BrazI, Brae, Infa, MontII, MuenI, Mues, Rubi, Typm, Gamn, GiveI, NewpII, MissII, MontI, Hart, Agbe, Hada, Mine, Oran, Luci, BertBuda), as.numeric)
 d6 <- d6 %>% rename(
   KisrI = Kisrl,
   MbanI = Mbanl,
+  SaitII = Saitll,
   MuenII = Muenll
 )
 #someone named a couple of the polyphyletic serovars using an L instead of roman numerals lol
 
-d6 <- d6 %>% mutate_at(vars(KisrI, MbanI, MuenII), as.numeric)
+d6 <- d6 %>% mutate_at(vars(KisrI, MbanI, MuenII, SaitII), as.numeric)
 
 ## ---- complexity --------
 d7 <- d6 %>% rowwise(Day)
