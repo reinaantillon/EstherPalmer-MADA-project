@@ -37,7 +37,7 @@ enviro_rawdata <- readxl::read_excel(enviro_data_location, sheet = "Sheet2")
 CSS_rawdata <- readxl::read_excel(CSS_data_location, col_names = FALSE)
 #This will read in the CSS data
 weekly_weather_rawdata <- readxl::read_excel(weekly_data_location, sheet = "Weather")
-weekly_CSS_rawdata <- readxl::read_excel(weekly_data_location, sheet = "CSS")
+weekly_CSS_rawdata <- readxl::read_excel(weekly_data_location, sheet = "CSS", col_names = FALSE)
 #My undergrads did not put it all in one sheet for me :/
 #As such I will load each sheet separately and merge later
 
@@ -264,6 +264,39 @@ d10$wind.speed <- as.numeric(d10$wind.speed)
 #Now this all looks good!
 
 ## ---- weeklydataCSS --------
+d11 <- as.data.frame(weekly_CSS_rawdata, headers = FALSE)
+d11[1, 1] = "Day"
+d11 <- t(d11)
+d11 <- as.data.frame(d11)
+#without this last command I wasn't actually able to see anything in the matrix which concerned me
+d12 <- d11 %>% janitor::row_to_names(row_number = 1)
+
+d12 <- d12 %>% select(-Sum)
+d12 <- dplyr::filter(d12, Day != "Frequency")
+d12$Day <- as.integer(d12$Day)
+d12$Day <- as.character(d12$Day)
+
+d12 <- d12 %>% rename(
+  BrazI = `Brazil I`,
+  MontII = `Montevideo II`,
+  MuenI = `Muenchen I`,
+  Rubi = Rubislaw,
+  GiveI = `Give I`,
+  NewpII = `Newport II`,
+  Hart = Harford,
+  CerrI = `Cerro I`,
+  Schw = Schwarzengrund,
+  DKPPR = DurbKokmPanaPomoReadII,
+  Typm = Typhimurium
+)
+
+d12 <- d12 %>% mutate_at(vars(BrazI, MontII, MuenI, Rubi, Typm, GiveI, NewpII, Hart, CerrI, Schw, DKPPR), as.numeric)
+d12$Complexity <- as.integer(d12$Complexity)
+
+#Now this looks good! The only issue is that it seems like there are more CSS days than weather days.
+#I have asked Dawson for the remaining weather days
+#Once I have those I'll merge the CSS and weather data together
+
 
 
 ## ---- savedata --------
