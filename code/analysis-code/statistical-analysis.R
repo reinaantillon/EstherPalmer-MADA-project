@@ -9,10 +9,11 @@ library(ggplot2) #for plotting
 library(broom) #for cleaning up output from lm()
 library(here) #for data loading/saving
 library(tidymodels) #for modeling
-library(randomForest) #for randomforest modeling
+#library(randomForest) #for randomforest modeling
 library(caret) #modeling
 library(ranger) #random forest modeling but different
 library(corrplot) #to make a correlation plot of my variables
+library(vip) #for seeing random forest results
 
 #path to data
 #note the use of the here() package and not absolute paths
@@ -242,6 +243,23 @@ lm_pred7 <- collect_predictions(lm_fit_cv7)
 lm_p7 <- lm_pred7 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 lm_p7
 
+#removing rel.humid, radiation, depth, width, TDS, flow average, and temp
+lm_wf8 <- workflow() %>% add_model(lm_mod) %>% 
+  add_formula(complexity ~ pH + wind.speed + rain + turbidity)
+lm_fit_cv8 <- lm_wf8 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+lm_fit_cv8
+collect_metrics(lm_fit_cv8)
+
+lm_fit8 <- lm_wf8 %>% fit(train)
+tidy(lm_fit8)
+lm_train_pred8 <- predict(lm_fit8, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred8 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+lm_pred8 <- collect_predictions(lm_fit_cv8)
+
+lm_p8 <- lm_pred8 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
+lm_p8
 
 ############################
 #### Random Forest attempt
@@ -262,15 +280,21 @@ lm_p7
 
 #ok I found a different package lets try this maybe it will hate me less
 
-rf_mod <- rand_forest(trees = 1000) %>% set_engine("ranger") %>% set_mode("regression")
-rf_fit <- rf_mod %>% fit(complexity~., data = train)
-rf_fit
+rf_mod1 <- rand_forest(trees = 1000) %>% set_engine("ranger", seed = rngseed) %>% set_mode("regression")
+rf_wf1 <- workflow() %>% add_model(rf_mod1) %>% add_formula(complexity ~ TDS + pH + temp + depth + width + rel.humid + wind.speed + radiation + rain + turbidity + flow_avg)
+rf_fit_cv1 <- rf_wf1 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+rf_fit_cv1
+collect_metrics(rf_fit_cv1)
 
-rf_train_pred <- predict(rf_fit, train) %>% 
-  bind_cols(train %>% select(complexity))
-#unlike my last random forest this is predicting less NA's which is good
+rf_pred1 <- collect_predictions(rf_fit_cv1)
+
+rf_p1 <- rf_pred1 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
+rf_p1
 
 rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+rf1_tree <- rf_fit %>% extract_fit_parsnip() %>% vip::vip()
+rf1_tree
 
 rf_test_pred <- predict(rf_fit, test) %>%
   bind_cols(test %>% select(complexity))
