@@ -122,7 +122,7 @@ lm_fit1 <- lm_wf1 %>% fit(train)
 tidy(lm_fit1)
 lm_train_pred1 <- predict(lm_fit1, train) %>% bind_cols(train %>% select(complexity))
 
-lm_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+lm_train_pred1 %>% yardstick::rmse(truth = complexity, estimate = .pred)
 
 lm_fit_cv1 <- lm_wf1 %>% 
   fit_resamples(folds, control = control_resamples(save_pred = TRUE, save_workflow = TRUE, extract = I))
@@ -131,20 +131,25 @@ collect_metrics(lm_fit_cv1)
 
 lm_pred1 <- collect_predictions(lm_fit_cv1)
 
-lm_p1 <- lm_pred1 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point()
+lm_p1 <- lm_pred1 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 lm_p1
 
-#removing rel.humid
+#removing radiation
 lm_wf2 <- workflow() %>% add_model(lm_mod) %>% 
-  add_formula(complexity ~ TDS + pH + temp + depth + width + wind.speed + radiation + rain + turbidity + flow_avg)
+  add_formula(complexity ~ TDS + pH + temp + depth + width + wind.speed + rel.humid + rain + turbidity + flow_avg)
 lm_fit_cv2 <- lm_wf2 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE, save_workflow = TRUE))
 lm_fit_cv2
 collect_metrics(lm_fit_cv2)
 
+lm_fit2 <- lm_wf2 %>% fit(train)
+tidy(lm_fit2)
+lm_train_pred2 <- predict(lm_fit2, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred2 %>% yardstick::rmse(truth = complexity, estimate = .pred)
 
 lm_pred2 <- collect_predictions(lm_fit_cv2)
 
-lm_p2 <- lm_pred2 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point()
+lm_p2 <- lm_pred2 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 lm_p2
 #This has a lower rmse
 
@@ -155,24 +160,88 @@ lm_fit_cv3 <- lm_wf3 %>% fit_resamples(folds, control = control_resamples(save_p
 lm_fit_cv3
 collect_metrics(lm_fit_cv3)
 
+lm_fit3 <- lm_wf3 %>% fit(train)
+tidy(lm_fit3)
+lm_train_pred3 <- predict(lm_fit3, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred3 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
 lm_pred3 <- collect_predictions(lm_fit_cv3)
 
-lm_p3 <- lm_pred3 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point()
+lm_p3 <- lm_pred3 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 lm_p3
 
-
-
-#Temp + radiation
+#removing rel.humid, radiation, and depth
 lm_wf4 <- workflow() %>% add_model(lm_mod) %>% 
-  add_formula(complexity ~ temp + flow_avg)
-lm_fit_cv4 <- lm_wf3 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+  add_formula(complexity ~ TDS + pH + temp + width + wind.speed + rain + turbidity + flow_avg)
+lm_fit_cv4 <- lm_wf4 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
 lm_fit_cv4
 collect_metrics(lm_fit_cv4)
 
+lm_fit4 <- lm_wf4 %>% fit(train)
+tidy(lm_fit4)
+lm_train_pred4 <- predict(lm_fit4, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred4 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
 lm_pred4 <- collect_predictions(lm_fit_cv4)
 
-lm_p4 <- lm_pred4 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point()
+lm_p4 <- lm_pred4 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 lm_p4
+
+#removing rel.humid, radiation, depth, and width
+lm_wf5 <- workflow() %>% add_model(lm_mod) %>% 
+  add_formula(complexity ~ TDS + pH + temp + wind.speed + rain + turbidity + flow_avg)
+lm_fit_cv5 <- lm_wf5 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+lm_fit_cv5
+collect_metrics(lm_fit_cv5)
+
+lm_fit5 <- lm_wf5 %>% fit(train)
+tidy(lm_fit5)
+lm_train_pred5 <- predict(lm_fit5, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred5 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+lm_pred5 <- collect_predictions(lm_fit_cv5)
+
+lm_p5 <- lm_pred5 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
+lm_p5
+
+#removing rel.humid, radiation, depth, width, and TDS
+lm_wf6 <- workflow() %>% add_model(lm_mod) %>% 
+  add_formula(complexity ~ pH + temp + wind.speed + rain + turbidity + flow_avg)
+lm_fit_cv6 <- lm_wf6 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+lm_fit_cv6
+collect_metrics(lm_fit_cv6)
+
+lm_fit6 <- lm_wf6 %>% fit(train)
+tidy(lm_fit6)
+lm_train_pred6 <- predict(lm_fit6, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred6 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+lm_pred6 <- collect_predictions(lm_fit_cv6)
+
+lm_p6 <- lm_pred6 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
+lm_p6
+
+#removing rel.humid, radiation, depth, width, TDS, and flow average
+lm_wf7 <- workflow() %>% add_model(lm_mod) %>% 
+  add_formula(complexity ~ pH + temp + wind.speed + rain + turbidity)
+lm_fit_cv7 <- lm_wf7 %>% fit_resamples(folds, control = control_resamples(save_pred = TRUE))
+lm_fit_cv7
+collect_metrics(lm_fit_cv7)
+
+lm_fit7 <- lm_wf7 %>% fit(train)
+tidy(lm_fit7)
+lm_train_pred7 <- predict(lm_fit7, train) %>% bind_cols(train %>% select(complexity))
+
+lm_train_pred7 %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+lm_pred7 <- collect_predictions(lm_fit_cv7)
+
+lm_p7 <- lm_pred7 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
+lm_p7
 
 
 ############################
