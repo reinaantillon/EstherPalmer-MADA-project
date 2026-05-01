@@ -1,5 +1,5 @@
 ---
-title: "Example Manuscript Template for a Data Analysis Project"
+title: "Modeling for _Salmonella_ complexity in a suburban creek"
 author: ""
 format:
   docx:

@@ -102,12 +102,13 @@ df4 <- df4 %>% select(-Anat, -AquaInve, -BrazI, -Brae, -Infa, -MontII, -MuenI, -
   -NewpII, -MissII, -MontI, -Hart, -Agbe, -Hada, -Mine, -Oran, -SaitII, -KisrI, -MbanI, -Luci, -BertBuda, -MuenII)
 
 df4$complexity <- as.integer(df4$complexity)
+df5 <- CSSdata %>% select(-complexity) # Marco Reina, I added this line here
 
 rngseed <- 1234
 set.seed(rngseed)
 
 train <- df4
-test <- df5
+test <- df5 
 #I will train on the daily, test on the weekly
 
 lm_mod <- linear_reg()
@@ -291,15 +292,24 @@ rf_pred1 <- collect_predictions(rf_fit_cv1)
 rf_p1 <- rf_pred1 %>% ggplot(aes(x=complexity, y=.pred)) + geom_point() + xlim(1, 11) + ylim(1, 11)
 rf_p1
 
-rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+#rf_train_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+############################################################
+# Marco Reina rf_train_pred seems like it is not defined ###
+############################################################
 
-rf1_tree <- rf_fit %>% extract_fit_parsnip() %>% vip::vip()
-rf1_tree
+#rf1_tree <- rf_fit %>% extract_fit_parsnip() %>% vip::vip()
+#rf1_tree
 
-rf_test_pred <- predict(rf_fit, test) %>%
-  bind_cols(test %>% select(complexity))
 
-rf_test_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+#rf_test_pred <- predict(rf_fit, test) %>%
+  #bind_cols(test %>% select(complexity))
+
+#rf_test_pred %>% yardstick::rmse(truth = complexity, estimate = .pred)
+
+#####################################################
+# Marco Reina rf_fit seems like it is not defined ###
+#####################################################
+
 #This still looks like a better rmse than the linear model?
 #have no idea what my acutal model looks like though
 
